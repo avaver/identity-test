@@ -1,23 +1,21 @@
-import React from 'react';
-import logo from './logo.svg';
 import './App.css';
+import { useAuth } from './auth/AuthProvider';
+import config from './authConfig';
 
 function App() {
+  const { user, login, logout } = useAuth();
+
   return (
     <div className="App">
       <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.tsx</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
+        <div style={{ padding: '20px' }}>
+          User: {user ? user.id + ' (' + user.name + ' @ ' + user.tenant + ')' : 'N/A'}
+        </div>
+        {user ? (
+          <button onClick={() => logout()}>Logout</button>
+        ) : (
+          <button onClick={() => login(config.resolveTenant())}>Login to {config.resolveTenant()}</button>
+        )}
       </header>
     </div>
   );
