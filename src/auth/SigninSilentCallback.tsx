@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import { getUserManager } from './oidc';
 
 const SigninSilentCallback = () => {
@@ -7,8 +7,8 @@ const SigninSilentCallback = () => {
     const manager = getUserManager();
     manager
       .signinSilentCallback()
-      .then(() => {
-        console.debug('signin silent completed successfully');
+      .then((user) => {
+        console.debug(`signin silent completed successfully, user: ${user?.profile.name}`);
       })
       .catch((error) => {
         console.warn('signin silent callback failed: ' + error.error);

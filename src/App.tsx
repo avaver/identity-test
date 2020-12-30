@@ -4,6 +4,10 @@ import config from './authConfig';
 
 function App() {
   const { user, login, logout } = useAuth();
+  const loginLogout = () => {
+    if (user) logout();
+    else login();
+  };
 
   return (
     <div className="App">
@@ -11,11 +15,7 @@ function App() {
         <div style={{ padding: '20px' }}>
           User: {user ? user.id + ' (' + user.name + ' @ ' + user.tenant + ')' : 'N/A'}
         </div>
-        {user ? (
-          <button onClick={() => logout()}>Logout</button>
-        ) : (
-          <button onClick={() => login(config.resolveTenant())}>Login to {config.resolveTenant()}</button>
-        )}
+        <button onClick={() => loginLogout()}>{user ? 'Logout' : 'Login to ' + config.resolveTenant()}</button>
       </header>
     </div>
   );

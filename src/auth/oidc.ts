@@ -1,12 +1,15 @@
 import { UserManager, Log, UserManagerSettings } from 'oidc-client';
+import { MultitenantUserManagerSettings } from './types';
 
 Log.logger = console;
 Log.level = Log.INFO;
 
 let userManager: UserManager;
+let settings: MultitenantUserManagerSettings;
 
 export const init = (config: UserManagerSettings) => {
   if (!userManager) {
+    settings = config as MultitenantUserManagerSettings;
     userManager = new UserManager(config);
     console.debug('UserManager initialized');
   }
@@ -20,30 +23,19 @@ export const getUserManager = () => {
   return userManager;
 };
 
-export const oidcLogin = async (tenant: string, username?: string) => {
+export const oidcLogin = async (username?: string) => {
   console.debug('oidcLogin called');
   const manager = getUserManager();
-  const user = await manager.getUser();
   const returnUrl = getCurrentUrl();
-  if (!user) {
-    console.debug('user not found, logging in');
-    await manager.signinRedirect({ acr_values: `tenant:${tenant}`, login_hint: username, data: { returnUrl } });
-  } else {
-    console.debug(`current user: ${user?.profile.name ?? user?.profile.sub}, trying silent login`);
-    oidcLoginSilent(tenant);
-  }
-};
+  const tenant = settings?.resolveTenant();
 
-export const oidcForceLogin = async (tenant: string, username?: string) => {
-  console.debug('oidcForceLogin called');
-  const manager = getUserManager();
-  const returnUrl = getCurrentUrl();
-  await manager.signinRedirect({
-    acr_values: `tenant:${tenant}`,
-    login_hint: username,
-    prompt: 'login',
+  const args: any = {
     data: { returnUrl },
-  });
+    ...(tenant && { acr_values: `tenant:${tenant}` }),
+    ...(username && { login_hint: username }),
+  };
+
+  await manager.signinRedirect(args);
 };
 
 export const oidcLoginSilent = async (tenant: string) => {

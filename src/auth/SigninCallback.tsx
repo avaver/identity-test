@@ -11,8 +11,9 @@ const SigninCallback = () => {
     manager
       .signinRedirectCallback()
       .then((user) => {
-        console.debug('signin completed successfully, redirecting to ' + user.state.returnUrl);
-        history.push(user.state.url ?? '/');
+        console.debug(`signin completed successfully, user: ${user?.profile.name}`);
+        console.debug('redirecting to ' + user.state.returnUrl);
+        history.push(user.state.returnUrl ?? '/');
       })
       .catch(async (error) => {
         console.warn('signin callback failed: ' + error.error);

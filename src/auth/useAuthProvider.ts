@@ -1,13 +1,13 @@
 import { User as OidcUser } from 'oidc-client';
 import { useCallback, useEffect, useState } from 'react';
-import { init, oidcForceLogin, oidcLogin, oidcLoginSilent, oidcLogout } from './oidc';
+import { init, oidcLogin, oidcLoginSilent, oidcLogout } from './oidc';
 import { MultitenantUserManagerSettings, User } from './types';
 
 export function useAuthProvider(
   settings: MultitenantUserManagerSettings
 ): {
   user: User | null;
-  login: (tenant: string, username?: string) => void;
+  login: (tusername?: string) => void;
   logout: () => void;
   callbackUrl: string;
   silentCallbackUrl: string;
@@ -25,37 +25,39 @@ export function useAuthProvider(
   const login = oidcLogin;
   const logout = oidcLogout;
 
-  const setUserWithTenantValidation = useCallback(
+  const setAppUser = useCallback(
     (u: OidcUser | null) => {
       let mappedUser: User | null = null;
       if (u) {
-        const tenant = settings.resolveTenant();
-        if (tenant.toLowerCase() !== u?.profile['tenant']?.toLowerCase()) {
-          console.debug(`token tenant: ${u?.profile['tenant']}, actual tenant: ${settings.resolveTenant()}`);
-          manager.removeUser();
-          setUser(null);
-          oidcForceLogin(tenant);
+        if (window.location.href.toLowerCase().startsWith(settings.redirect_uri!.toLowerCase())) {
+          console.debug('will retry tenant validation in 750ms as we are in the middle of signin callback');
+          setTimeout(setAppUser, 750, u);
           return;
         }
-        mappedUser = {
-          id: u.profile.sub,
-          tenant: u.profile[settings.tenantClaim],
-          token: u.access_token,
-          name: u.profile.name,
-          email: u.profile.email,
-        };
+        const urlTenant = settings.resolveTenant().toLowerCase();
+        const tokenTenant = u?.profile[settings.tenantClaim]?.toLowerCase();
+        console.debug(`token tenant: ${tokenTenant}, actual tenant: ${urlTenant}`);
+        if (tokenTenant === urlTenant) {
+          mappedUser = {
+            id: u.profile.sub,
+            tenant: u.profile[settings.tenantClaim],
+            token: u.access_token,
+            name: u.profile.name,
+            email: u.profile.email,
+          };
+        }
       }
       setUser(mappedUser);
     },
-    [manager, settings]
+    [settings]
   );
 
   const userLoaded = useCallback(
     (u: OidcUser) => {
       console.debug(`user loaded: ${u?.profile.name ?? u?.profile.sub}`);
-      setUserWithTenantValidation(u);
+      setAppUser(u);
     },
-    [setUserWithTenantValidation]
+    [setAppUser]
   );
 
   const userUnloaded = useCallback(() => {
@@ -101,7 +103,7 @@ export function useAuthProvider(
     (async () => {
       const u = await manager.getUser();
       if (!destroyed) {
-        setUserWithTenantValidation(u);
+        setAppUser(u);
       }
     })();
 
@@ -124,7 +126,7 @@ export function useAuthProvider(
     userSessionChanged,
     userSignedOut,
     userUnloaded,
-    setUserWithTenantValidation,
+    setAppUser,
   ]);
 
   return {
