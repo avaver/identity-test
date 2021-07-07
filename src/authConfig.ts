@@ -1,13 +1,13 @@
 import { MultitenantUserManagerSettings } from './auth/types';
 
 const config: MultitenantUserManagerSettings = {
-  authority: 'https://account.dentalsuite.local:5001/',
-  client_id: 'dentalsuite.web',
-  redirect_uri: `${window.location.origin}/authentication/callback`,
-  silent_redirect_uri: `${window.location.origin}/authentication/silentcallback`,
+  authority: 'https://authd1.dentalsuite.io/',
+  client_id: 'dentalsuite.client.web',
+  scope: 'openid dentalsuite.scope.profile dentalsuite.scope.api',
   response_type: 'code',
-  scope: 'openid dentalsuite.profile dentalsuite.api',
-  post_logout_redirect_uri: `${window.location.origin}/`,
+  redirect_uri: `${window.location.origin}/auth/login`,
+  silent_redirect_uri: `${window.location.origin}/auth/loginsilent`,
+  post_logout_redirect_uri: `${window.location.origin}/auth/logout`,
   automaticSilentRenew: true,
   revokeAccessTokenOnSignout: true,
   checkSessionInterval: 5000,

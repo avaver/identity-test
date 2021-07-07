@@ -2,7 +2,7 @@ import { UserManager, Log, UserManagerSettings } from 'oidc-client';
 import { MultitenantUserManagerSettings } from './types';
 
 Log.logger = console;
-Log.level = Log.INFO;
+Log.level = Log.WARN;
 
 let userManager: UserManager;
 let settings: MultitenantUserManagerSettings;
@@ -38,7 +38,7 @@ export const oidcLogin = async (username?: string) => {
   await manager.signinRedirect(args);
 };
 
-export const oidcLoginSilent = async (tenant: string) => {
+export const oidcLoginSilent = async () => {
   console.debug('oidcLoginSilent called');
   const manager = getUserManager();
   const user = await manager.getUser();
@@ -51,7 +51,7 @@ export const oidcLoginSilent = async (tenant: string) => {
       console.debug(`error during silent signin: ${error}`);
       console.debug('removing user and trying normal login');
       await manager.removeUser();
-      oidcLogin(tenant);
+      oidcLogin();
     }
   }
 };
@@ -61,7 +61,7 @@ export const oidcLogout = async () => {
   const manager = getUserManager();
   const user = await manager.getUser();
   console.debug(`current user: ${user?.profile.name ?? user?.profile.sub}`);
-  await manager.signoutRedirect();
+  await manager.signoutRedirect({ state: settings?.resolveTenant() });
 };
 
 const getCurrentUrl = () => window.location.pathname + window.location.search + window.location.hash;

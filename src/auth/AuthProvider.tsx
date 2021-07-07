@@ -4,11 +4,12 @@ import { AuthContext } from './AuthContext';
 import { BrowserRouter as Router, Route } from 'react-router-dom';
 import SigninCallback from './SigninCallback';
 import SigninSilentCallback from './SigninSilentCallback';
+import SignoutCallback from './SignoutCallback';
 import { useAuthProvider } from './useAuthProvider';
 import { MultitenantUserManagerSettings } from './types';
 
 const AuthProvider: FC<{ settings: MultitenantUserManagerSettings }> = ({ settings, children }) => {
-  const { user, login, logout, callbackUrl, silentCallbackUrl } = useAuthProvider(settings);
+  const { user, login, logout, callbackUrl, silentCallbackUrl, logoutUrl } = useAuthProvider(settings);
   return (
     <AuthContext.Provider value={{ user, login, logout }}>
       <Router>
@@ -17,6 +18,9 @@ const AuthProvider: FC<{ settings: MultitenantUserManagerSettings }> = ({ settin
         </Route>
         <Route path={silentCallbackUrl}>
           <SigninSilentCallback />
+        </Route>
+        <Route path={logoutUrl}>
+          <SignoutCallback />
         </Route>
         <Route path="*">{children}</Route>
       </Router>

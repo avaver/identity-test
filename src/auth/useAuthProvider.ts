@@ -3,14 +3,13 @@ import { useCallback, useEffect, useState } from 'react';
 import { init, oidcLogin, oidcLoginSilent, oidcLogout } from './oidc';
 import { MultitenantUserManagerSettings, User } from './types';
 
-export function useAuthProvider(
-  settings: MultitenantUserManagerSettings
-): {
+export function useAuthProvider(settings: MultitenantUserManagerSettings): {
   user: User | null;
-  login: (tusername?: string) => void;
+  login: (username?: string) => void;
   logout: () => void;
   callbackUrl: string;
   silentCallbackUrl: string;
+  logoutUrl: string;
 } {
   const manager = init(settings);
   const [user, setUser] = useState<User | null>(null);
@@ -19,8 +18,11 @@ export function useAuthProvider(
     return uri.substr(uri.indexOf('/', uri.indexOf('//') + 2));
   };
 
-  const callbackUrl = settings.redirect_uri ? getUriPath(settings.redirect_uri) : '/auth/cb';
-  const silentCallbackUrl = settings.silent_redirect_uri ? getUriPath(settings.silent_redirect_uri) : '/auth/scb';
+  const callbackUrl = settings.redirect_uri ? getUriPath(settings.redirect_uri) : '/auth/login';
+  const silentCallbackUrl = settings.silent_redirect_uri
+    ? getUriPath(settings.silent_redirect_uri)
+    : '/auth/loginsilent';
+  const logoutUrl = settings.post_logout_redirect_uri ? getUriPath(settings.post_logout_redirect_uri) : '/auth/logout';
 
   const login = oidcLogin;
   const logout = oidcLogout;
@@ -73,12 +75,12 @@ export function useAuthProvider(
 
   const accessTokenExpiring = useCallback(async () => {
     console.debug('access token expiring');
-    await oidcLoginSilent('test');
+    await oidcLoginSilent();
   }, []);
 
   const accessTokenExpired = useCallback(async () => {
     console.debug('access token expired');
-    await oidcLoginSilent('test');
+    await oidcLoginSilent();
   }, []);
 
   const silentRenewError = useCallback((error: Error) => {
@@ -135,5 +137,6 @@ export function useAuthProvider(
     logout,
     callbackUrl,
     silentCallbackUrl,
+    logoutUrl,
   };
 }
